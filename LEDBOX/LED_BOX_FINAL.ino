@@ -51,7 +51,7 @@
  * NUMOFSTRIPS define how many addressable strips there are
  */
 Adafruit_NeoPixel pixelList[] = {
-  Adafruit_NeoPixel(NUM_LED_P, PIN_P, NEO_RGB + NEO_KHZ800),
+   Adafruit_NeoPixel(NUM_LED_P, PIN_P, NEO_RGB + NEO_KHZ800),
    Adafruit_NeoPixel(NUM_LED_S, PIN_S, NEO_RGB + NEO_KHZ800),
    Adafruit_NeoPixel(NUM_LED_I, PIN_I, NEO_RGB + NEO_KHZ800),
    Adafruit_NeoPixel(NUM_LED_T, PIN_T, NEO_RGB + NEO_KHZ800)
@@ -133,17 +133,14 @@ void setup() {
   // init colour
   colour_black = pixelList[PODIUM_PIXELLIST].Color(0, 0, 0);
   colour_red = pixelList[PODIUM_PIXELLIST].Color(255, 0, 0);
-  colour_white = pixelList[PODIUM_PIXELLIST].Color(240, 240, 240);
+  colour_white = pixelList[PODIUM_PIXELLIST].Color(240, 220, 240);
   colour_yellow = pixelList[PODIUM_PIXELLIST].Color(255, 0, 228);
-  colour_blue = pixelList[PODIUM_PIXELLIST].Color(0, 0, 255);
+  colour_blue = pixelList[PODIUM_PIXELLIST].Color(0, 255, 0);
 
   // init LED strips at each letters
   initLED();
   // seed random
   randomSeed(analogRead(0));
-
-  // debug
-  Serial.begin(9600);
 }
 
 void loop() {
@@ -190,7 +187,7 @@ void countdown(){
   while (pressed){
     //Start of SIT
     //random
-    randomFill(18);
+    randomFill(13);
     
     //OPM
     blinkFill(colour_red);
@@ -200,7 +197,7 @@ void countdown(){
     spreadFill(colour_red);
 
     //random
-    randomFill(25);
+    randomFill(15);
     
     //PACMAN
     blinkFill(colour_white);
@@ -212,7 +209,7 @@ void countdown(){
     delay(PLAYSPEED);
     snakeFill();
     delay(PLAYSPEED);
-    randomFill(28);
+    randomFill(12);
     delay(PLAYSPEED);
     speedFill();
     delay(PLAYSPEED);
@@ -311,11 +308,12 @@ void randomFill(uint8_t randomOccurence){
    
    //random
    for (count = 0; count < randomOccurence; count++){
-    numberOfPixel = (int)random(1, 5); //random max is exclusive
+    //numberOfPixel = (int)random(1, 5); //random max is exclusive
     // clear 
     clearFill();
     // check for number of pixel to be displayed
-    for (i = 0; i < numberOfPixel; i++){
+    //for (i = 0; i < numberOfPixel; i++){
+    for (i = 0; i < 2; i++){
       letter = (int)random(1, NUMOFSTRIPS + 1);
       randPixel = (int)random(1, numOfLED[letter] - 1); //should be -2 for i max is 6,7, but exclusive
       _fillPixel(letter, randPixel, _genRandomColour(letter));
@@ -374,20 +372,20 @@ void pacManFill(){
    clearFill();
    // fill with white
    solidFill(colour_white);
-   delay(PACMANDELAY);
    // numbering based on total LED
    for (currentLetter = 0; currentLetter < TOTAL_LED; currentLetter+= LED_PER_BOX){
     // fill the pixel
-    _fillPixelSingle(currentLetter, colour_yellow);
-    _fillPixelSingle(previous, colour_black);
-    _fillPixelSingle(ghost, colour_blue);
-    _fillPixelSingle(previous_ghost, colour_black);
+    _fillPixelSingleReverse(currentLetter, colour_yellow);
+    _fillPixelSingleReverse(previous, colour_black);
+    _fillPixelSingleReverse(ghost, colour_red);
+    _fillPixelSingleReverse(previous_ghost, colour_black);
     // increase the count
     previous += LED_PER_BOX;
     ghost += LED_PER_BOX;
     previous_ghost += LED_PER_BOX;
     // delay
-    delay(PACMANDELAY);
+    if (currentLetter > LED_PER_BOX)
+      delay(PACMANDELAY);
    }
 }
 
@@ -467,6 +465,33 @@ void _fillPixelSingle(uint8_t number, const uint32_t & color){
     return;
   // fill pixel based on found letter and adjusted number
   _fillPixel(i, number, color);
+} 
+
+void _fillPixelSingleReverse(uint8_t number, const uint32_t & color){
+  /*
+   * This function do single pixel/box filling based on numbering sequence
+   * Input: number, which number sequence to be displayed; color, which color to be displayed
+   * Output: None
+   */
+  // init
+  uint8_t i;
+  // from number sequence, determine which letter
+  for (i = 1; i < NUMOFSTRIPS; i++){
+    if (number >= numOfLED[i])
+      number -= numOfLED[i];
+    else
+      break;
+  }
+  // number if negative
+  if (number < 0)
+    return;
+  if (i == 2){
+    // fill pixel based on found letter and adjusted number
+    _fillPixel(i, numOfLED[i] - number - LED_PER_BOX, color);
+  }else{
+    // fill pixel based on found letter and adjusted number
+    _fillPixel(i, number, color);
+  }
 } 
  
 void _fillLetterSeq(const uint8_t & choice, const uint32_t & color, const uint8_t & reverse, const int & delayValue){
